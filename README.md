@@ -18,3 +18,59 @@ We have two Dataverse tables: **Executives Accounts Table** that will be used to
 - [x] Create the Canvas App
 - [x] Create the Model-Driven App
 - [x] Add the Canvas App to the Executives Table Information Main Form
+
+# CODE
+**Get the MDA record id from the form where the Canvas App is Embeded**
+
+```sj
+UpdateContext({lclVarHostMDAformId: GUID(First([@ModelDrivenFormIntegration].Data).ItemId)})
+```
+
+**Capture the Signature in base64 format from the PenInput control**
+
+```sj
+Set(
+    sig64,
+    Substitute(
+        JSON(
+            PenInput1_1.Image,
+            IncludeBinaryData
+        ),
+        """",
+        ""
+    )
+)
+```
+**Create New Signature**
+
+```sj
+Patch(
+        Signatures,
+        Defaults(Signatures),
+        {
+            'EID - EXC Account': LookUp(
+                'EXC Accounts',
+                'EXC Accounts' = lclVarHostMDAformId
+            ),
+            'Signatures Field': sig64,
+            'Sig Name': txtNewTitle.Text
+        }
+    )
+   ;
+    ModelDrivenFormIntegration.RefreshForm(true)
+```
+
+**Update Existing Signature**
+
+```sj
+UpdateIf(
+            Signatures,
+            'Sig Name' = GallerySigs.Selected.'Sig Name',
+            {
+                'Signatures Field': sig64,
+                'Sig Name': TextInput1.Text
+            }
+        )
+       ;
+       ModelDrivenFormIntegration.RefreshForm(true)
+
